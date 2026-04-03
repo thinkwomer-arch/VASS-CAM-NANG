@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cẩm nang Nhận diện & Phản bác — VASS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #faf9f7;
+    --card: #ffffff;
+    --border: #e0dbd2;
+    --text: #1a1a1a;
+    --muted: #666;
+    --subtle: #888;
+    --warm: #fdf8f0;
+    --gold: #c8a96e;
+    --red: #b91c1c;
+    --amber: #b45309;
+    --blue: #1d4ed8;
+    --green: #065f46;
+    --purple: #7c3aed;
+    --teal: #0e7490;
+    --level-high: #dc2626;
+    --level-mid: #d97706;
+    --level-low: #2563eb;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: #12122a;
+    color: #f5f0e8;
+    padding: 40px 24px 32px;
+    border-bottom: 4px solid var(--red);
+    position: relative;
+    overflow: hidden;
+  }
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 50%, rgba(185,28,28,0.12) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .header-inner { max-width: 880px; margin: 0 auto; position: relative; }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    font-family: sans-serif;
+  }
+  .header-badge::before {
+    content: '';
+    width: 28px; height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+  .site-header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .header-sub {
+    font-size: 14px;
+    color: var(--gold);
+    font-style: italic;
+    margin-bottom: 20px;
+  }
+  .header-notice {
+    padding: 12px 16px;
+    background: rgba(185,28,28,0.14);
+    border: 1px solid rgba(185,28,28,0.35);
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: #e8d5b7;
+    line-height: 1.65;
+    font-family: sans-serif;
+    max-width: 680px;
+  }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+  }
+  .search-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .search-inner input {
+    width: 100%;
+    padding: 9px 16px 9px 38px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .search-inner input:focus { border-color: #aaa; }
+  .search-icon {
+    position: absolute;
+    left: 13px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+    color: var(--subtle);
+  }
+
+  /* ── TABS ── */
+  .tabs-wrap {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    display: flex;
+    padding: 0 16px;
+    gap: 2px;
+    min-width: max-content;
+  }
+  .tab-btn {
+    padding: 13px 15px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: all .2s;
+    font-weight: 400;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    font-weight: 600;
+    border-bottom-color: var(--active-color);
+    color: var(--active-color);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
+  .section-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--subtle);
+    margin-bottom: 22px;
+    font-family: sans-serif;
+  }
+  .meta-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── ACCORDION CARDS ── */
+  .card {
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+    background: var(--card);
+  }
+  .card.open {
+    box-shadow: 0 3px 14px rgba(0,0,0,0.07);
+  }
+  .card-trigger {
+    width: 100%;
+    text-align: left;
+    padding: 16px 20px;
+    background: var(--card);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    transition: background .15s;
+  }
+  .card.open .card-trigger { background: var(--warm); }
+  .card-num {
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #f0ece4;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 1px;
+    transition: background .2s, color .2s;
+    font-family: sans-serif;
+  }
+  .card.open .card-num {
+    background: var(--active-color);
+    color: #fff;
+  }
+  .card-body { flex: 1; }
+  .card-tags {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .tag {
+    font-size: 10px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-family: sans-serif;
+  }
+  .tag-high { background: rgba(220,38,38,.12); color: var(--level-high); }
+  .tag-mid  { background: rgba(217,119,6,.12); color: var(--level-mid); }
+  .tag-low  { background: rgba(37,99,235,.12); color: var(--level-low); }
+  .card-quote {
+    font-size: 15px;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .card-arrow {
+    flex-shrink: 0;
+    font-size: 17px;
+    margin-top: 4px;
+    transition: transform .22s;
+    color: var(--active-color);
+    line-height: 1;
+  }
+  .card.open .card-arrow { transform: rotate(180deg); }
+
+  /* ── EXPANDED BODY ── */
+  .card-expand {
+    padding: 0 20px 20px 63px;
+    background: var(--warm);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    display: none;
+  }
+  .card.open .card-expand { display: block; }
+  .expand-label {
+    font-size: 10.5px;
+    font-family: sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    margin: 18px 0 12px;
+  }
+  .phanbac-list {
+    list-style: none;
+    counter-reset: pb;
+    padding: 0;
+  }
+  .phanbac-list li {
+    counter-increment: pb;
+    font-size: 14px;
+    line-height: 1.75;
+    margin-bottom: 11px;
+    color: #2d2d2d;
+    padding-left: 28px;
+    position: relative;
+  }
+  .phanbac-list li::before {
+    content: counter(pb);
+    position: absolute;
+    left: 0; top: 3px;
+    width: 19px; height: 19px;
+    border-radius: 50%;
+    background: var(--active-color);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: sans-serif;
+  }
+  .nguon-box {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: sans-serif;
+    line-height: 1.6;
+  }
+  .nguon-label {
+    font-weight: 700;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    margin-top: 36px;
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+  }
+  .legend-title { font-size: 12px; color: var(--subtle); font-family: sans-serif; }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-text { font-size: 12px; color: #555; font-family: sans-serif; }
+
+  /* ── NO RESULTS ── */
+  .no-results {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--subtle);
+    font-style: italic;
+    font-size: 15px;
+  }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    background: #12122a;
+    color: rgba(255,255,255,0.45);
+    text-align: center;
+    padding: 20px 24px;
+    font-size: 11.5px;
+    font-family: sans-serif;
+    letter-spacing: 0.04em;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .site-footer span { color: var(--gold); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .card-expand { padding-left: 20px; }
+    .phanbac-list li { padding-left: 24px; }
+    .main { padding: 20px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-badge">Viện Hàn lâm Khoa học Xã hội Việt Nam — VASS</div>
+    <h1>Cẩm nang Nhận diện &amp; Phản bác</h1>
+    <p class="header-sub">Luận điểm sai trái, thù địch — Luận cứ khoa học đối ứng</p>
+    <div class="header-notice">
+      📌 Tài liệu tham khảo phục vụ công tác nghiên cứu, tư vấn chính sách và bảo vệ nền tảng tư tưởng của Đảng theo Nghị quyết 35-NQ/TW của Bộ Chính trị. Kể từ 01/4/2026, VASS là đơn vị sự nghiệp trực thuộc Ban Chấp hành Trung ương Đảng.
+    </div>
+  </div>
+</header>
+
+<!-- SEARCH -->
+<div class="search-bar">
+  <div class="search-inner">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Tìm kiếm luận điệu..." oninput="filterCards()">
+  </div>
+</div>
+
+<!-- TABS -->
+<nav class="tabs-wrap" id="tabsNav">
+  <div class="tabs-inner" id="tabsInner"></div>
+</nav>
+
+<!-- MAIN -->
+<main class="main" id="mainContent">
+  <div class="section-meta" id="sectionMeta"></div>
+  <div id="cardList"></div>
+  <div class="legend">
+    <span class="legend-title">Mức độ phổ biến:</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#dc2626"></span><span class="legend-text">Rất phổ biến</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:#d97706"></span><span class="legend-text">Phổ biến</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:#2563eb"></span><span class="legend-text">Trung bình</span></span>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <span>VASS</span> — Viện Hàn lâm Khoa học Xã hội Việt Nam &nbsp;·&nbsp; Đơn vị sự nghiệp của Ban Chấp hành Trung ương Đảng &nbsp;·&nbsp; 2026
+</footer>
+
+<script>
+const categories = [
+  { id:"marxism", label:"Chủ nghĩa Mác–Lênin",       color:"#b91c1c", icon:"📚" },
+  { id:"hcm",     label:"Tư tưởng Hồ Chí Minh",       color:"#b45309", icon:"⭐" },
+  { id:"party",   label:"Vai trò lãnh đạo của Đảng",  color:"#1d4ed8", icon:"🏛️" },
+  { id:"democracy",label:"Dân chủ & Nhân quyền",      color:"#065f46", icon:"⚖️" },
+  { id:"economy", label:"Kinh tế thị trường XHCN",    color:"#7c3aed", icon:"📈" },
+  { id:"history", label:"Lịch sử & Chủ quyền",        color:"#0e7490", icon:"🗺️" },
+];
+
+const data = {
+  marxism:[
+    {
+      luandiem:"Chủ nghĩa Mác–Lênin đã lỗi thời, không phù hợp với thời đại 4.0 và kinh tế số",
+      mucdo:"Rất phổ biến",
+      phanbac:[
+        "Phương pháp luận duy vật biện chứng của Mác vẫn là công cụ phân tích xã hội hiện đại có giá trị, không lệ thuộc vào công nghệ cụ thể của từng thời kỳ.",
+        "Bất bình đẳng thu nhập, mâu thuẫn lao động–tư bản, khủng hoảng tài chính định kỳ trong nền kinh tế tư bản hiện đại chứng minh tính dự báo của học thuyết này.",
+        "Việt Nam ứng dụng sáng tạo Mác–Lênin trong Đổi Mới 1986, đạt tăng trưởng GDP trung bình ~6,5%/năm suốt gần 40 năm — minh chứng thực tiễn mạnh nhất.",
+        "Bản thân Mác nhấn mạnh lý luận phải không ngừng phát triển theo thực tiễn — phủ nhận Mác vì 'lỗi thời' mâu thuẫn với chính tinh thần của học thuyết.",
+      ],
+      nguon:"Kinh tế chính trị học Mác–Lênin; Báo cáo phát triển con người UNDP; số liệu GSO Việt Nam",
+    },
+    {
+      luandiem:"Chủ nghĩa xã hội đã sụp đổ ở Đông Âu — chứng tỏ mô hình thất bại hoàn toàn",
+      mucdo:"Phổ biến",
+      phanbac:[
+        "Sự sụp đổ của Liên Xô và Đông Âu phản ánh sai lầm trong vận dụng giáo điều, quan liêu — không phủ nhận bản chất khoa học của học thuyết.",
+        "Việt Nam, Cuba, Trung Quốc duy trì và phát triển theo con đường XHCN với những thành tựu cụ thể về giảm nghèo, y tế, giáo dục.",
+        "Mô hình tư bản cũng có nhiều cuộc khủng hoảng, sụp đổ (2008, v.v.) — thất bại không phải tiêu chí duy nhất để bác bỏ một hệ thống.",
+        "Việt Nam rút ra bài học từ sụp đổ đó để đổi mới, thích nghi — không phải từ bỏ.",
+      ],
+      nguon:"Nghiên cứu lịch sử Đảng; Nguyễn Phú Trọng 'CNXH và con đường đi lên CNXH ở Việt Nam' (2021)",
+    },
+    {
+      luandiem:"Đấu tranh giai cấp không còn phù hợp trong xã hội hiện đại, hội nhập toàn cầu",
+      mucdo:"Trung bình",
+      phanbac:[
+        "Học thuyết đấu tranh giai cấp không đồng nghĩa với bạo lực — trong bối cảnh hiện đại nó được hiểu là đấu tranh về chính sách, phân phối, quyền lợi lao động.",
+        "Các phong trào công đoàn, tăng lương tối thiểu, phúc lợi xã hội ở các nước tư bản đều là biểu hiện của mâu thuẫn giai cấp được giải quyết từng bước.",
+        "Việt Nam không chủ trương đấu tranh giai cấp cực đoan mà nhấn mạnh đoàn kết dân tộc — đây là sự vận dụng sáng tạo.",
+      ],
+      nguon:"Văn kiện Đại hội XIV; Nghiên cứu VASS về bất bình đẳng xã hội Việt Nam",
+    },
+  ],
+  hcm:[
+    {
+      luandiem:"Tư tưởng Hồ Chí Minh mâu thuẫn với Chủ nghĩa Mác–Lênin vì mang tính dân tộc",
+      mucdo:"Rất phổ biến",
+      phanbac:[
+        "Mác–Lênin luôn nhấn mạnh phải vận dụng vào điều kiện cụ thể từng quốc gia — tư tưởng Hồ Chí Minh là sự hiện thân của nguyên tắc này.",
+        "Lênin cũng kết hợp chủ nghĩa quốc tế với yếu tố dân tộc trong Cách mạng tháng Mười — không có mâu thuẫn bản chất.",
+        "Hồ Chí Minh tiếp thu Mác–Lênin từ năm 1920 và khẳng định đây là 'cẩm nang thần kỳ' — không có cơ sở để cho rằng Người phủ nhận nền tảng này.",
+        "Hai hệ giá trị bổ sung cho nhau: Mác–Lênin cung cấp phương pháp luận, tư tưởng HCM cung cấp hướng vận dụng vào thực tiễn Việt Nam.",
+      ],
+      nguon:"Hồ Chí Minh Toàn tập; Nghiên cứu VASS về tư tưởng HCM trong kỷ nguyên mới",
+    },
+    {
+      luandiem:"Hồ Chí Minh thực ra là người dân tộc chủ nghĩa, không phải cộng sản thực sự",
+      mucdo:"Trung bình",
+      phanbac:[
+        "Hồ Chí Minh đã tham gia sáng lập Đảng Cộng sản Pháp (1920), Đảng Cộng sản Đông Dương (1930) — bằng chứng lịch sử không thể phủ nhận.",
+        "Các tác phẩm của Người như 'Đường Kách Mệnh', 'Bản án chế độ thực dân Pháp' thể hiện tư duy Mác–Lênin rõ ràng.",
+        "Kết hợp chủ nghĩa dân tộc và chủ nghĩa cộng sản là sáng tạo lý luận, không phải mâu thuẫn.",
+      ],
+      nguon:"Hồ Chí Minh Toàn tập; Lịch sử ĐCSVN",
+    },
+    {
+      luandiem:"Di chúc Hồ Chí Minh bị sửa đổi, ý nguyện thực sự của Người bị che giấu",
+      mucdo:"Trung bình",
+      phanbac:[
+        "Bản Di chúc gốc được lưu giữ tại Cục Lưu trữ Trung ương Đảng và đã được công bố đầy đủ vào năm 1989 sau hơn 20 năm từng bước tiếp cận công khai.",
+        "Nghiên cứu văn bản học so sánh các phiên bản cho thấy khác biệt chỉ liên quan đến bổ sung nội dung theo từng năm (1965, 1968, 1969) — không phải xuyên tạc.",
+        "Những ai tiếp cận lưu trữ quốc tế đều có thể đối chiếu — đây không phải tài liệu bị giấu kín.",
+      ],
+      nguon:"Cục Lưu trữ Trung ương Đảng; Nghiên cứu VASS về lịch sử văn bản Di chúc",
+    },
+  ],
+  party:[
+    {
+      luandiem:"Chế độ một đảng vi phạm dân chủ, cần đa đảng mới có cạnh tranh chính trị lành mạnh",
+      mucdo:"Rất phổ biến",
+      phanbac:[
+        "Dân chủ không đồng nghĩa với đa đảng — các nghiên cứu so sánh cho thấy nhiều nước đa đảng vẫn có tham nhũng cao, bất bình đẳng và khủng hoảng dân chủ.",
+        "Mô hình Việt Nam có hình thức dân chủ đặc thù: Mặt trận Tổ quốc, Quốc hội đại diện, lấy ý kiến nhân dân, tiếp dân định kỳ.",
+        "Đảng CSVN chịu trách nhiệm trực tiếp trước nhân dân qua kết quả phát triển: giảm nghèo từ 58% (1993) xuống ~2% (2023) — mức độ 'trách nhiệm giải trình' thực chất.",
+        "Đa đảng trong bối cảnh Việt Nam có nguy cơ phân mảnh dân tộc, lợi dụng từ bên ngoài — lịch sử thực dân cho thấy đây là rủi ro có thật.",
+      ],
+      nguon:"Báo cáo phát triển bền vững UNDP Việt Nam; Nghiên cứu VASS về thể chế chính trị so sánh",
+    },
+    {
+      luandiem:"Đảng không còn đại diện cho giai cấp công nhân mà phục vụ nhóm lợi ích",
+      mucdo:"Phổ biến",
+      phanbac:[
+        "Chống tham nhũng quyết liệt từ 2016–nay (hàng nghìn cán bộ bị xử lý, kể cả cấp cao nhất) là bằng chứng Đảng tự làm sạch mình.",
+        "Chính sách an sinh xã hội, bảo hiểm y tế toàn dân, nhà ở xã hội cho thấy định hướng phục vụ đại chúng vẫn được duy trì.",
+        "Cơ cấu đảng viên có xu hướng trẻ hóa, mở rộng thành phần — không phải cấu trúc đóng của 'nhóm lợi ích'.",
+      ],
+      nguon:"Báo cáo Ban Chỉ đạo PCTN; Nghiên cứu VASS về công bằng xã hội",
+    },
+    {
+      luandiem:"Quân đội và công an phải trung lập, không thể trung thành với một đảng",
+      mucdo:"Trung bình",
+      phanbac:[
+        "Không có quân đội nào hoàn toàn 'trung lập' — quân đội Mỹ trung thành với Hiến pháp và Tổng thống, quân đội Anh với Vương thất.",
+        "Trong bối cảnh Việt Nam, Đảng lãnh đạo quân đội là sự bảo đảm ngăn chặn đảo chính quân sự — bài học từ nhiều nước Đông Nam Á.",
+        "Lực lượng vũ trang Việt Nam có nguồn gốc từ lực lượng cách mạng — bản chất chính trị là tất yếu lịch sử.",
+      ],
+      nguon:"Hiến pháp 2013; Luật Quốc phòng; Nghiên cứu so sánh mô hình dân sự-quân sự VASS",
+    },
+  ],
+  democracy:[
+    {
+      luandiem:"Việt Nam vi phạm nhân quyền, đàn áp bất đồng chính kiến và tự do ngôn luận",
+      mucdo:"Rất phổ biến",
+      phanbac:[
+        "Việt Nam là thành viên Hội đồng Nhân quyền LHQ nhiều nhiệm kỳ — được cộng đồng quốc tế ghi nhận thành tựu về quyền kinh tế-xã hội.",
+        "Tỷ lệ biết chữ 96,4%, tuổi thọ trung bình 75 tuổi, bảo hiểm y tế toàn dân là những chỉ số nhân quyền thực chất.",
+        "Các hành vi bị xử lý hình sự là vi phạm pháp luật cụ thể, không phải 'bất đồng chính kiến' đơn thuần — cần phân biệt rõ ràng.",
+        "Phương Tây áp dụng tiêu chí nhân quyền không đồng đều — nhiều đồng minh của họ có hồ sơ nhân quyền tệ hơn nhưng không bị chỉ trích.",
+      ],
+      nguon:"Báo cáo UPR Việt Nam; UNDP Human Development Index; Nghiên cứu VASS về phúc lợi xã hội",
+    },
+    {
+      luandiem:"Tự do báo chí ở Việt Nam bị xếp hạng thấp — chứng tỏ kiểm soát thông tin toàn diện",
+      mucdo:"Phổ biến",
+      phanbac:[
+        "Các tổ chức xếp hạng như RSF có tiêu chí thiên vị mô hình tư bản phương Tây — không phản ánh đầy đủ bối cảnh và nhu cầu thông tin của từng quốc gia.",
+        "Việt Nam có hơn 800 cơ quan báo chí, hàng triệu người dùng mạng xã hội hoạt động tự do — không phải mô hình 'kiểm soát toàn diện'.",
+        "Nhiều quốc gia dân chủ cũng có luật về thông tin sai lệch, an ninh mạng — ranh giới giữa 'tự do' và 'trật tự thông tin' là vấn đề mức độ.",
+      ],
+      nguon:"Số liệu Bộ TT&TT; So sánh luật an ninh mạng quốc tế; Nghiên cứu VASS về truyền thông",
+    },
+    {
+      luandiem:"Các dân tộc thiểu số bị đồng hóa và mất bản sắc văn hóa tại Việt Nam",
+      mucdo:"Trung bình",
+      phanbac:[
+        "Việt Nam công nhận 53 dân tộc thiểu số, có chính sách bảo tồn ngôn ngữ, văn hóa, phong tục riêng với ngân sách chuyên biệt.",
+        "Chương trình mục tiêu quốc gia phát triển kinh tế-xã hội vùng đồng bào dân tộc thiểu số đang được triển khai với quy mô lớn.",
+        "UNESCO và các tổ chức quốc tế đánh giá tích cực về chính sách đa dạng văn hóa của Việt Nam.",
+      ],
+      nguon:"Ủy ban Dân tộc; Nghiên cứu VASS về dân tộc và bản sắc văn hóa",
+    },
+  ],
+  economy:[
+    {
+      luandiem:"Kinh tế thị trường định hướng XHCN là mô hình mơ hồ, mâu thuẫn nội tại",
+      mucdo:"Rất phổ biến",
+      phanbac:[
+        "Mô hình này phản ánh thực tế rằng không có nền kinh tế thị trường 'thuần túy' — Mỹ, châu Âu đều có can thiệp nhà nước đáng kể.",
+        "Định hướng XHCN là mục tiêu phân phối và công bằng xã hội — không mâu thuẫn với cơ chế thị trường trong giai đoạn quá độ.",
+        "Sau gần 40 năm Đổi Mới, GDP bình quân đầu người tăng hơn 30 lần — mô hình này chứng minh hiệu quả thực tiễn.",
+        "Nhiều nhà kinh tế học (kể cả phương Tây) thừa nhận thị trường cần điều tiết — tranh luận chỉ là mức độ can thiệp.",
+      ],
+      nguon:"WB Vietnam Economic Update; ADB; Nghiên cứu VASS về mô hình kinh tế Việt Nam",
+    },
+    {
+      luandiem:"Doanh nghiệp nhà nước kém hiệu quả, cản trở phát triển — cần tư nhân hóa hoàn toàn",
+      mucdo:"Phổ biến",
+      phanbac:[
+        "DNNN trong các lĩnh vực chiến lược (năng lượng, quốc phòng, hạ tầng) tồn tại ở mọi nước phát triển — kể cả Singapore, Hàn Quốc, Pháp.",
+        "Hiệu quả DNNN phụ thuộc vào quản trị, không phải bản chất sở hữu — cải cách quản trị là giải pháp, không phải tư nhân hóa toàn bộ.",
+        "Tư nhân hóa tràn lan có thể dẫn đến độc quyền tư nhân, còn nguy hiểm hơn độc quyền nhà nước.",
+      ],
+      nguon:"Nghiên cứu VASS về DNNN; Báo cáo OECD về sở hữu nhà nước; kinh nghiệm quốc tế",
+    },
+    {
+      luandiem:"Việt Nam phụ thuộc quá nhiều vào FDI, thiếu nền kinh tế tự chủ thực sự",
+      mucdo:"Trung bình",
+      phanbac:[
+        "FDI là thành phần không thể thiếu trong chiến lược công nghiệp hóa của mọi nền kinh tế đang phát triển thành công (Hàn Quốc, Đài Loan giai đoạn cất cánh).",
+        "Việt Nam đang chủ động nâng cấp lên chuỗi giá trị cao hơn thông qua các chính sách công nghệ bán dẫn, R&D, đào tạo nhân lực.",
+        "Tỷ trọng kinh tế tư nhân trong nước ngày càng tăng — xu hướng giảm dần phụ thuộc FDI là có cơ sở.",
+      ],
+      nguon:"Chiến lược phát triển kinh tế xã hội 2021-2030; Nghiên cứu VASS về kinh tế đối ngoại",
+    },
+  ],
+  history:[
+    {
+      luandiem:"Chiến tranh Việt Nam là nội chiến — Mỹ chỉ giúp đỡ miền Nam, không phải xâm lược",
+      mucdo:"Phổ biến",
+      phanbac:[
+        "Hiệp định Genève 1954 quy định vĩ tuyến 17 là ranh giới tạm thời, không phải biên giới quốc gia — Việt Nam là một quốc gia bị chia cắt chờ thống nhất.",
+        "Sự hiện diện của hơn 500.000 quân Mỹ và chiến dịch ném bom miền Bắc không thể gọi là 'hỗ trợ nội chiến' — đó là can thiệp quân sự trực tiếp.",
+        "Ngay các nhà sử học Mỹ (Stanley Karnow, Gabriel Kolko) đều thừa nhận đây là cuộc chiến tranh xâm lược thất bại.",
+        "Tòa án quốc tế Russell (1967) kết luận Mỹ phạm tội ác chiến tranh tại Việt Nam.",
+      ],
+      nguon:"Lịch sử ĐCSVN; Tài liệu Pentagon Papers; Nghiên cứu VASS về lịch sử hiện đại",
+    },
+    {
+      luandiem:"Việt Nam xâm phạm chủ quyền Campuchia khi can thiệp quân sự 1978–1989",
+      mucdo:"Trung bình",
+      phanbac:[
+        "Chế độ Khmer Đỏ đã thảm sát ~2 triệu người Campuchia (1/4 dân số) — can thiệp của Việt Nam ngăn chặn nạn diệt chủng tiếp diễn.",
+        "Khmer Đỏ đã tấn công biên giới Việt Nam trước năm 1978, gây ra phản ứng tự vệ chính đáng theo luật quốc tế.",
+        "Việt Nam rút quân hoàn toàn năm 1989 theo cam kết, không chiếm đóng lâu dài.",
+        "Ngay cả nhiều học giả quốc tế thừa nhận sự can thiệp của Việt Nam thực tế đã chấm dứt nạn diệt chủng — vấn đề đạo đức quốc tế phức tạp hơn 'xâm phạm chủ quyền' đơn giản.",
+      ],
+      nguon:"Tài liệu LHQ về Campuchia; Nghiên cứu lịch sử VASS; Báo cáo quốc tế về diệt chủng",
+    },
+    {
+      luandiem:"Việt Nam không có chủ quyền lịch sử rõ ràng đối với Hoàng Sa, Trường Sa",
+      mucdo:"Phổ biến",
+      phanbac:[
+        "Bản đồ lịch sử và tài liệu hành chính từ thời Nguyễn (thế kỷ 17-19) xác lập chủ quyền liên tục của Việt Nam đối với hai quần đảo.",
+        "Hội nghị San Francisco 1951, Việt Nam tuyên bố chủ quyền và không có sự phản đối của đa số các nước tham dự.",
+        "UNCLOS 1982 và phán quyết Tòa Trọng tài 2016 bác bỏ yêu sách 'đường lưỡi bò' — tạo cơ sở pháp lý quốc tế mạnh mẽ cho lập trường của Việt Nam.",
+      ],
+      nguon:"Nghiên cứu VASS về chủ quyền biển đảo; Bộ Ngoại giao Việt Nam; UNCLOS và phán quyết PCA 2016",
+    },
+  ],
+};
+
+// ─── State ───
+let activeTab = 'marxism';
+let expandedCard = null;
+let searchQuery = '';
+
+// ─── Render tabs ───
+function renderTabs() {
+  const inner = document.getElementById('tabsInner');
+  inner.innerHTML = categories.map(c => `
+    <button
+      class="tab-btn ${c.id === activeTab ? 'active' : ''}"
+      style="--active-color:${c.color}"
+      onclick="switchTab('${c.id}')"
+    >${c.icon} ${c.label}</button>
+  `).join('');
+}
+
+// ─── Render cards ───
+function renderCards() {
+  const cat = categories.find(c => c.id === activeTab);
+  const items = (data[activeTab] || []).filter(item => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return item.luandiem.toLowerCase().includes(q) ||
+           item.phanbac.some(p => p.toLowerCase().includes(q));
+  });
+
+  // meta
+  document.getElementById('sectionMeta').innerHTML = `
+    <span class="meta-dot" style="background:${cat.color}"></span>
+    ${searchQuery
+      ? `<span>${items.length} kết quả cho "<strong>${searchQuery}</strong>" trong nhóm <strong>${cat.label}</strong></span>`
+      : `<span>${items.length} luận điệu trong nhóm <strong>${cat.label}</strong> — nhấn để xem luận cứ phản bác</span>`}
+  `;
+
+  const tagClass = { 'Rất phổ biến':'tag-high', 'Phổ biến':'tag-mid', 'Trung bình':'tag-low' };
+
+  if (items.length === 0) {
+    document.getElementById('cardList').innerHTML = `<div class="no-results">Không tìm thấy kết quả phù hợp.</div>`;
+    return;
+  }
+
+  document.getElementById('cardList').innerHTML = items.map((item, idx) => {
+    const isOpen = expandedCard === idx;
+    return `
+    <div class="card ${isOpen ? 'open' : ''}" style="--active-color:${cat.color}" id="card-${idx}">
+      <button class="card-trigger" onclick="toggleCard(${idx})">
+        <span class="card-num">${idx+1}</span>
+        <div class="card-body">
+          <div class="card-tags">
+            <span class="tag ${tagClass[item.mucdo] || 'tag-low'}">${item.mucdo}</span>
+          </div>
+          <div class="card-quote">"${item.luandiem}"</div>
+        </div>
+        <span class="card-arrow">▾</span>
+      </button>
+      <div class="card-expand">
+        <div class="expand-label" style="color:${cat.color}">🛡️ Luận cứ phản bác</div>
+        <ol class="phanbac-list" style="--active-color:${cat.color}">
+          ${item.phanbac.map(p => `<li>${p}</li>`).join('')}
+        </ol>
+        <div class="nguon-box">
+          <span class="nguon-label" style="color:${cat.color}">📎 Nguồn tham chiếu: </span>${item.nguon}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(id) {
+  activeTab = id;
+  expandedCard = null;
+  renderTabs();
+  renderCards();
+  // scroll to top of content
+  document.getElementById('mainContent').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function toggleCard(idx) {
+  expandedCard = expandedCard === idx ? null : idx;
+  renderCards();
+}
+
+function filterCards() {
+  searchQuery = document.getElementById('searchInput').value.trim();
+  expandedCard = null;
+  renderCards();
+}
+
+// ─── Init ───
+renderTabs();
+renderCards();
+</script>
+</body>
+</html>
